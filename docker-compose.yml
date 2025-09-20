@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: soat
+      POSTGRES_PASSWORD: soat
+      POSTGRES_DB: videos
+    ports: ["5432:5432"]
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports: ["5672:5672", "15672:15672"]
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg2://soat:soat@db:5432/videos
+      BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      RESULT_BACKEND: rpc://
+      STORAGE_DIR: /data
+      JWT_PUBLIC_KEY: ""
+    volumes: [ "files:/data" ]
+    depends_on: [ "db", "rabbitmq" ]
+    ports: ["8000:8000"]
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg2://soat:soat@db:5432/videos
+      BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      RESULT_BACKEND: rpc://
+      STORAGE_DIR: /data
+      JWT_PUBLIC_KEY: ""
+    volumes: [ "files:/data" ]
+    depends_on: [ "db", "rabbitmq" ]
+    command: >
+        celery -A app.adapters.driver.worker.celery_app:celery_app
+        worker -l info -Q celery -E
+  flower:
+    image: mher/flower:1.2
+    environment: { CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672// }
+    ports: ["5555:5555"]
+    depends_on: [ "rabbitmq" ]
+
+volumes:
+  pgdata:
+  files:

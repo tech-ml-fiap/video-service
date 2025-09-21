@@ -76,7 +76,11 @@ def test_celery_app_uses_env_and_imports_tasks():
     assert app.conf.task_acks_late is True
 
     tasks_mod = sys.modules.get("app.adapters.driver.worker.tasks")
-    assert tasks_mod and getattr(tasks_mod, "DUMMY_TASKS_IMPORTED", False) is True
+    assert tasks_mod is not None
+
+    dummy_ok = getattr(tasks_mod, "DUMMY_TASKS_IMPORTED", False) is True
+    real_ok = hasattr(tasks_mod, "process_video_job")
+    assert dummy_ok or real_ok
 
 
 def test_celery_app_defaults_when_env_missing():

@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from app.domain.entities import Video
 from app.domain.ports.repository import VideoRepositoryPort
-from .models import VideoModel
+from app.adapters.driven.db.models import VideoModel
 
 class SQLAlchemyVideoRepository(VideoRepositoryPort):
     def __init__(self, session: Session):

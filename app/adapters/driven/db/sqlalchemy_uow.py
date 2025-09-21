@@ -1,9 +1,8 @@
 from sqlalchemy.orm import sessionmaker, Session
 from app.domain.ports.uow import UnitOfWorkPort
 from app.domain.ports.repository import VideoRepositoryPort, JobRepositoryPort
-from .models import Base
-from .sqlalchemy_video_repo import SQLAlchemyVideoRepository
-from .sqlalchemy_job_repo import SQLAlchemyJobRepository
+from app.adapters.driven.repositories.sqlalchemy_video_repo import SQLAlchemyVideoRepository
+from app.adapters.driven.repositories.sqlalchemy_job_repo import SQLAlchemyJobRepository
 
 class SQLAlchemyUnitOfWork(UnitOfWorkPort):
     def __init__(self, session_factory: sessionmaker):

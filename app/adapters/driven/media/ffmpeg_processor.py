@@ -1,4 +1,3 @@
-# app/adapters/driven/video/ffmpeg_processor.py
 from pathlib import Path
 import subprocess
 from app.domain.ports.video_processor import VideoProcessorPort
@@ -8,7 +7,7 @@ class FFmpegVideoProcessor(VideoProcessorPort):
         self.ffmpeg_bin = ffmpeg_bin
         self.timeout_sec = timeout_sec
 
-    def extract_frames(self, input_path: str, out_dir: str, fps: int = 1) -> int:  # <-- default = 1
+    def extract_frames(self, input_path: str, out_dir: str, fps: int = 1) -> int:
         out_dir_p = Path(out_dir)
         out_dir_p.mkdir(parents=True, exist_ok=True)
 

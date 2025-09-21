@@ -1,8 +1,7 @@
-# app/adapters/driver/worker/celery_app.py
 import os
 from celery import Celery
 
-broker_url = os.getenv("BROKER_URL", "amqp://guest:guest@rabbitmq:5672//")  # evite 'localhost' no container
+broker_url = os.getenv("BROKER_URL", "amqp://guest:guest@rabbitmq:5672//")
 result_backend = os.getenv("RESULT_BACKEND", "rpc://")
 
 celery_app = Celery("video_processor", broker=broker_url, backend=result_backend)
@@ -17,7 +16,7 @@ celery_app.conf.update(
 
 
 # (opção A) importar o módulo de tasks explicitamente
-import app.adapters.driver.worker.tasks  # <-- ADICIONE ESTA LINHA
+import app.adapters.driver.worker.tasks
 
 # (opção B alternativa) ao invés da linha acima:
 # celery_app.conf.imports = ("app.adapters.driver.worker.tasks",)

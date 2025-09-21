@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from app.domain.entities import VideoJob
 from app.domain.ports.repository import JobRepositoryPort
-from .models import JobModel  # <- alinhar para JobModel
+from app.adapters.driven.db.models import JobModel
 
 
 class SQLAlchemyJobRepository(JobRepositoryPort):

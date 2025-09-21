@@ -1,4 +1,5 @@
 import os, shutil
+import zipfile
 from datetime import datetime
 from app.domain.entities import JobStatus
 from app.domain.ports.uow import UnitOfWorkPort
@@ -40,9 +41,21 @@ class ProcessVideoService:
                 if frame_count <= 0:
                     raise RuntimeError("No frames extracted")
 
-                zip_base = os.path.join(temp_dir, f"frames_{job.id}")
-                shutil.make_archive(zip_base, "zip", temp_dir)
-                artifact_ref = self.storage.save_artifact(f"{zip_base}.zip")
+                zip_path = os.path.join(temp_dir, f"frames_{job.id}.zip")
+                with zipfile.ZipFile(
+                        zip_path,
+                        mode="w",
+                        compression=zipfile.ZIP_DEFLATED,
+                        allowZip64=True,
+                ) as zf:
+                    for root, _, files in os.walk(temp_dir):
+                        for f in sorted(files):
+                            if f.lower().endswith((".jpg", ".jpeg", ".png")):
+                                abs_path = os.path.join(root, f)
+                                rel_path = os.path.relpath(abs_path, temp_dir)
+                                zf.write(abs_path, arcname=rel_path)
+
+                artifact_ref = self.storage.save_artifact(zip_path)
 
                 job.frame_count = frame_count
                 job.artifact_ref = artifact_ref

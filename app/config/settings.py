@@ -6,6 +6,6 @@ class Settings(BaseModel):
     broker_url: str = os.getenv("BROKER_URL", "amqp://guest:guest@localhost:5672//")
     result_backend: str = os.getenv("RESULT_BACKEND", "rpc://")
     storage_dir: str = os.getenv("STORAGE_DIR", "./data")
-    jwt_public_key: str = os.getenv("JWT_PUBLIC_KEY", "")
+    CUSTOMER_SERVICE_URL: str = os.getenv("CUSTOMER_SERVICE_URL", "")
 
 settings = Settings()

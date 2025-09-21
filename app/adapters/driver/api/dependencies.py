@@ -1,23 +1,24 @@
-import os, jwt
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Security, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
+from app.domain.errors import AuthError
+from app.domain.ports.customer_auth_port import CustomerAuthPort
+from app.config.container import get_auth_gateway
+
+security = HTTPBearer(auto_error=False)
 
 class CurrentUser(BaseModel):
     user_id: str
 
-def current_user(authorization: str | None = Header(default=None)) -> CurrentUser:
-    public_key = os.getenv("JWT_PUBLIC_KEY", "")
-    if public_key and authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ", 1)[1]
-        try:
-            try:
-                payload = jwt.decode(token, public_key, algorithms=["RS256"])
-            except Exception:
-                payload = jwt.decode(token, public_key, algorithms=["HS256"])
-            sub = payload.get("sub") or payload.get("user_id")
-            if not sub:
-                raise ValueError("sub missing")
-            return CurrentUser(user_id=str(sub))
-        except Exception:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    return CurrentUser(user_id="demo-user")
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Security(security),
+    auth: CustomerAuthPort = Depends(get_auth_gateway),
+) -> CurrentUser:
+    if not credentials or credentials.scheme.lower() != "bearer":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciais ausentes")
+
+    try:
+        uid = auth.verify_token(credentials.credentials)
+        return CurrentUser(user_id=str(uid))
+    except AuthError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)

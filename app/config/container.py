@@ -1,5 +1,9 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from app.adapters.driven.gateway.customer_auth_http import CustomerAuthHttp
 from app.config.settings import settings
 from app.adapters.driven.db.models import Base
 from app.adapters.driven.db.sqlalchemy_uow import SQLAlchemyUnitOfWork
@@ -37,3 +41,6 @@ def get_status_service():
 
 def get_list_jobs_service():
     return ListJobsByUserService(uow=get_uow())
+
+def get_auth_gateway():
+    return CustomerAuthHttp(os.getenv("CUSTOMER_SERVICE_URL"))

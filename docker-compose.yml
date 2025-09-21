@@ -7,16 +7,18 @@ services:
       POSTGRES_DB: videos
     ports: ["5432:5432"]
     volumes: [ "pgdata:/var/lib/postgresql/data" ]
-
+    networks: [video]
   rabbitmq:
     image: rabbitmq:3-management
     ports: ["5672:5672", "15672:15672"]
+    networks: [video]
 
   api:
     build: .
     environment:
       DATABASE_URL: postgresql+psycopg2://soat:soat@db:5432/videos
       BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      CUSTOMER_SERVICE_URL: http://clientservice-web:8000
       RESULT_BACKEND: rpc://
       STORAGE_DIR: /data
       JWT_PUBLIC_KEY: ""
@@ -24,6 +26,7 @@ services:
     depends_on: [ "db", "rabbitmq" ]
     ports: ["8000:8000"]
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks: [video]
 
   worker:
     build: .
@@ -38,12 +41,19 @@ services:
     command: >
         celery -A app.adapters.driver.worker.celery_app:celery_app
         worker -l info -Q celery -E
+    networks: [video]
   flower:
     image: mher/flower:1.2
     environment: { CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672// }
     ports: ["5555:5555"]
     depends_on: [ "rabbitmq" ]
+    networks: [video]
 
 volumes:
   pgdata:
   files:
+
+networks:
+  video:
+    external: true
+    name: video-net

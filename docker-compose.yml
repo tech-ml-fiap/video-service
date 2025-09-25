@@ -12,9 +12,12 @@ services:
       - DD_APM_ENABLED=true
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
       - DD_TAGS=project:videos
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_CONTAINER_LABELS_AS_TAGS={"com.docker.compose.service":"service","com.docker.compose.project":"project"}
     ports:
-      - "8126:8126"
-      - "8125:8125/udp"
+      - "8126:8126"       # APM
+      - "8125:8125/udp"   # DogStatsD
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
@@ -31,11 +34,17 @@ services:
     ports: ["5432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
     networks: [video]
+    labels:
+      com.datadoghq.ad.logs: >-
+        [{"source":"postgresql","service":"videos-service-db"}]
 
   rabbitmq:
     image: rabbitmq:3-management
     ports: ["5672:5672", "15672:15672"]
     networks: [video]
+    labels:
+      com.datadoghq.ad.logs: >-
+        [{"source":"rabbitmq","service":"videos-service-rabbitmq"}]
 
   api:
     build: .
@@ -49,15 +58,19 @@ services:
       DD_SERVICE: api
       DD_ENV: dev
       DD_VERSION: "1.0.0"
-      DD_AGENT_HOST: dd-agent
+      DD_AGENT_HOST: dd-agent     # nome do serviço do agent
       DD_TRACE_AGENT_PORT: "8126"
       DD_TAGS: project:videos
+      DD_LOGS_INJECTION: "true"
     volumes: ["files:/data"]
     depends_on: ["db", "rabbitmq", "dd-agent"]
     ports: ["8000:8000"]
     command: >
       ddtrace-run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks: [video]
+    labels:
+      com.datadoghq.ad.logs: >-
+        [{"source":"python","service":"video-service"}]
 
   worker:
     build: .
@@ -73,20 +86,25 @@ services:
       DD_AGENT_HOST: dd-agent
       DD_TRACE_AGENT_PORT: "8126"
       DD_TAGS: project:videos
+      DD_LOGS_INJECTION: "true"
     volumes: ["files:/data"]
     depends_on: ["db", "rabbitmq", "dd-agent"]
     command: >
-      ddtrace-run celery -A app.adapters.driver.worker.celery_app:celery_app
-      worker -l info -Q celery -E
+      ddtrace-run celery -A app.adapters.driver.worker.celery_app:celery_app worker -l info -Q celery -E
     networks: [video]
+    labels:
+      com.datadoghq.ad.logs: >-
+        [{"source":"python","service":"video-service-worker"}]
 
   flower:
     image: mher/flower:1.2
-    environment:
-      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+    environment: { CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672// }
     ports: ["5555:5555"]
     depends_on: ["rabbitmq"]
     networks: [video]
+    labels:
+      com.datadoghq.ad.logs: >-
+        [{"source":"flower","service":"video-service-flower"}]
 
 volumes:
   pgdata:

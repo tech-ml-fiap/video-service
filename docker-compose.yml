@@ -3,7 +3,7 @@ version: "3.9"
 services:
   dd-agent:
     image: gcr.io/datadoghq/agent:7
-    container_name: dd-agent
+    container_name: dd-agent-video-service
     restart: unless-stopped
     environment:
       - DD_API_KEY=${DD_API_KEY}

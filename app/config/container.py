@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.adapters.driven.gateway.customer_auth_http import CustomerAuthHttp
+from app.adapters.driven.gateway.notification_client_http import HttpNotificationClient
 from app.config.settings import settings
 from app.adapters.driven.db.models import Base
 from app.adapters.driven.db.sqlalchemy_uow import SQLAlchemyUnitOfWork
@@ -30,11 +31,14 @@ def get_bus():
 def get_processor():
     return FFmpegVideoProcessor()
 
+def get_notifier():
+    return HttpNotificationClient()
+
 def get_enqueue_service():
     return EnqueueVideoService(uow=get_uow(), storage=get_storage(), bus=get_bus())
 
 def get_process_service():
-    return ProcessVideoService(uow=get_uow(), storage=get_storage(), processor=get_processor())
+    return ProcessVideoService(uow=get_uow(), storage=get_storage(), processor=get_processor(), notifier=get_notifier())
 
 def get_status_service():
     return GetJobStatusService(uow=get_uow())

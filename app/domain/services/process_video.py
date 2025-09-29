@@ -1,16 +1,20 @@
 import os, shutil
 import zipfile
 from datetime import datetime
+from typing import Optional
 from app.domain.entities import JobStatus
 from app.domain.ports.uow import UnitOfWorkPort
 from app.domain.ports.storage import StoragePort
 from app.domain.ports.video_processor import VideoProcessorPort
+from app.domain.ports.notification import NotificationPort
+
 
 class ProcessVideoService:
-    def __init__(self, uow: UnitOfWorkPort, storage: StoragePort, processor: VideoProcessorPort):
+    def __init__(self, uow: UnitOfWorkPort, storage: StoragePort, processor: VideoProcessorPort, notifier: NotificationPort):
         self.uow = uow
         self.storage = storage
         self.processor = processor
+        self.notifier = notifier
 
     def __call__(self, *, job_id: str) -> None:
         with self.uow:
@@ -20,6 +24,9 @@ class ProcessVideoService:
             job.status = JobStatus.RUNNING
             self.uow.jobs.update(job)
             self.uow.commit()
+
+        error_message: Optional[str] = None
+        final_status: JobStatus = JobStatus.ERROR
 
         with self.uow:
             job = self.uow.jobs.get(job_id)
@@ -31,6 +38,10 @@ class ProcessVideoService:
                 job.error = "Video not found"
                 self.uow.jobs.update(job)
                 self.uow.commit()
+                try:
+                    self.notifier.notify(user_id=job.user_id, job_id=job.id, status="error", error_message="Video not found")
+                except Exception:
+                    pass
                 return
 
             input_path = self.storage.resolve_path(video.storage_ref)
@@ -56,16 +67,21 @@ class ProcessVideoService:
                                 zf.write(abs_path, arcname=rel_path)
 
                 artifact_ref = self.storage.save_artifact(zip_path)
-
+                print("AQUI PORRA")
+                print(final_status)
                 job.frame_count = frame_count
                 job.artifact_ref = artifact_ref
                 job.status = JobStatus.DONE
                 job.updated_at = datetime.utcnow()
                 self.uow.jobs.update(job)
                 self.uow.commit()
+
+                final_status = JobStatus.DONE
+
             except Exception as e:
+                error_message = str(e)
                 job.status = JobStatus.ERROR
-                job.error = str(e)
+                job.error = error_message
                 job.updated_at = datetime.utcnow()
                 self.uow.jobs.update(job)
                 self.uow.commit()
@@ -74,3 +90,14 @@ class ProcessVideoService:
                     shutil.rmtree(temp_dir, ignore_errors=True)
                 except Exception:
                     pass
+
+        try:
+            print("OpA")
+            print(final_status)
+            if final_status == JobStatus.DONE:
+                self.notifier.notify(user_id=job.user_id, job_id=job_id, status="success", video_url=artifact_ref)
+            else:
+                self.notifier.notify(user_id=job.user_id, job_id=job_id, status="error", error_message=error_message)
+        except Exception:
+            # logar um warning
+            pass

@@ -1,9 +1,7 @@
-# use a base estável e previsível
 FROM python:3.11-slim-bookworm
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# troca http->https tanto em sources.list quanto no debian.sources (quando existir)
 RUN set -eux; \
     if [ -f /etc/apt/sources.list ]; then \
         sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list; \

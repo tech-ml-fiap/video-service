@@ -15,19 +15,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Cria a rede externa se não existir
       - name: Create external network
         run: docker network create video-net || true
 
-      # Sobe serviços de infra (Postgres + RabbitMQ)
       - name: Start infra
         run: docker compose up -d db rabbitmq
 
-      # Aguarda o Postgres responder
       - name: Wait for Postgres
         run: |
           for i in {1..30}; do
-            if docker exec $(docker ps -qf "name=db") pg_isready -U soat; then
+            if docker exec db pg_isready -U soat; then
               echo "✅ Postgres pronto"; exit 0
             fi
             echo "⏳ Aguardando Postgres..."; sleep 2
@@ -38,22 +35,19 @@ jobs:
       - name: Build application image
         run: docker build -t videoservice:${{ github.sha }} .
 
-      # Roda migrations no container da app
       - name: Run migrations
         run: |
           docker run --rm \
             --network video-net \
+            --env-file .env \
             -v ${{ github.workspace }}:/app \
             -w /app \
-            -e DATABASE_URL=postgresql+psycopg2://soat:soat@db:5432/videos \
             videoservice:${{ github.sha }} \
             alembic upgrade head
 
-      # Sobe API + Worker + Flower
       - name: Launch services
         run: docker compose up -d api worker flower
 
-      # Healthcheck da API
       - name: Health check (HTTP)
         run: |
           set -e
@@ -66,7 +60,6 @@ jobs:
           done
           docker logs api; exit 1
 
-      # Exporta logs para debug
       - name: Export logs
         run: |
           docker compose logs api > api.log || true
@@ -77,9 +70,4 @@ jobs:
       - name: Upload run logs
         uses: actions/upload-artifact@v4
         with:
-          name: cd-videoservice-logs
-          path: |
-            api.log
-            worker.log
-            postgres.log
-            rabbitmq.log
+          name: cd-videoservice-l

@@ -67,7 +67,8 @@ class ProcessVideoService:
                                 zf.write(abs_path, arcname=rel_path)
 
                 artifact_ref = self.storage.save_artifact(zip_path)
-
+                print("AQUI PORRA")
+                print(final_status)
                 job.frame_count = frame_count
                 job.artifact_ref = artifact_ref
                 job.status = JobStatus.DONE
@@ -91,6 +92,8 @@ class ProcessVideoService:
                     pass
 
         try:
+            print("OpA")
+            print(final_status)
             if final_status == JobStatus.DONE:
                 self.notifier.notify(user_id=job.user_id, job_id=job_id, status="success", video_url=artifact_ref)
             else:

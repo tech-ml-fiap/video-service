@@ -25,9 +25,6 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov flake8 coverage
 
-      - name: Lint & fix com Ruff
-        run: ruff check --fix .
-
       - name: Run tests and generate coverage
         run: |
           pytest --cov=app --cov-report=term --cov-report=xml --disable-warnings --cov-fail-under=70

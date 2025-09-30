@@ -10,6 +10,7 @@ from app.domain.ports.notification import NotificationPort, Status
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class HttpNotificationClient(NotificationPort):
     """
@@ -26,7 +27,7 @@ class HttpNotificationClient(NotificationPort):
     def notify(
         self,
         *,
-        user_id: Any,            # tipagem flexível; ajuste para int|str se preferir
+        user_id: Any,  # tipagem flexível; ajuste para int|str se preferir
         job_id: str,
         status: Status,
         video_url: Optional[str] = None,
@@ -71,7 +72,7 @@ class HttpNotificationClient(NotificationPort):
                     except Exception:
                         body_decoded = body_bytes.decode("utf-8", errors="replace")
 
-                    print(f"[notify] ✅ Sucesso")
+                    print("[notify] ✅ Sucesso")
                     print(f"[notify] Status: {status_code}")
                     print(f"[notify] Headers: {resp_headers}")
                     print(f"[notify] Body: {body_decoded}")
@@ -87,15 +88,17 @@ class HttpNotificationClient(NotificationPort):
                 except Exception:
                     err_decoded = err_body.decode("utf-8", errors="replace")
 
-                print(f"[notify] ❌ HTTPError")
+                print("[notify] ❌ HTTPError")
                 print(f"[notify] Status: {e.code}")
                 print(f"[notify] Reason: {e.reason}")
-                print(f"[notify] Headers: {dict(e.headers.items()) if e.headers else {}}")
+                print(
+                    f"[notify] Headers: {dict(e.headers.items()) if e.headers else {}}"
+                )
                 print(f"[notify] Body: {err_decoded}")
 
             except urllib.error.URLError as e:
                 last_exc = e
-                print(f"[notify] ❌ URLError")
+                print("[notify] ❌ URLError")
                 print(f"[notify] Reason: {getattr(e, 'reason', e)}")
 
             except Exception as e:
@@ -108,5 +111,7 @@ class HttpNotificationClient(NotificationPort):
             time.sleep(sleep_s)
 
         logger.warning(f"[notify] falha ao notificar job={job_id}: {last_exc}")
-        print(f"[notify] ❗ Falha definitiva ao notificar job={job_id}. Último erro: {last_exc}")
+        print(
+            f"[notify] ❗ Falha definitiva ao notificar job={job_id}. Último erro: {last_exc}"
+        )
         return

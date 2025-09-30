@@ -2,7 +2,6 @@ from app.domain.ports.uow import UnitOfWorkPort
 import pytest
 
 
-
 class DummyVideoRepo:
     def __init__(self):
         self.add_calls = []
@@ -91,22 +90,33 @@ class MissingCommit:
 class MissingRepos:
     def __enter__(self):
         return self
+
     def __exit__(self, exc_type, exc, tb):
         return False
+
     def commit(self):
         pass
+
     def rollback(self):
         pass
 
 
 def use_uow_happy(uow: UnitOfWorkPort):
     with uow as tx:
-        class V: pass
-        v = V(); v.id = "v1"
+
+        class V:
+            pass
+
+        v = V()
+        v.id = "v1"
         tx.videos.add(v)
 
-        class J: pass
-        j = J(); j.id = "j1"; j.user_id = "u1"
+        class J:
+            pass
+
+        j = J()
+        j.id = "j1"
+        j.user_id = "u1"
         tx.jobs.add(j)
 
         tx.commit()
@@ -162,4 +172,4 @@ def test_isinstance_and_issubclass_are_not_allowed_without_runtime_checkable():
     with pytest.raises(TypeError):
         isinstance(ImplOK(), UnitOfWorkPort)  # noqa: B015
     with pytest.raises(TypeError):
-        issubclass(ImplOK, UnitOfWorkPort)    # noqa: B015
+        issubclass(ImplOK, UnitOfWorkPort)  # noqa: B015

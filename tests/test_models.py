@@ -11,8 +11,12 @@ from app.domain.entities import Video, VideoJob, JobStatus
 
 def test_video_from_and_to_entity_roundtrip(session, uid):
     v_ent = Video(
-        id=uid(), user_id="u1", filename="file.mp4", storage_ref="s3://bucket/k",
-        duration=12.34, created_at=datetime.now(timezone.utc)
+        id=uid(),
+        user_id="u1",
+        filename="file.mp4",
+        storage_ref="s3://bucket/k",
+        duration=12.34,
+        created_at=datetime.now(timezone.utc),
     )
 
     v_model = VideoModel.from_entity(v_ent)
@@ -87,13 +91,27 @@ def test_job_from_and_to_entity_roundtrip_with_defaults(session, uid):
 
 def test_relationship_video_jobs_and_back_populates(session, uid):
     video = VideoModel(
-        id=uid(), user_id="u1", filename="a.mp4", storage_ref="s3://bucket/a", duration=3.2
+        id=uid(),
+        user_id="u1",
+        filename="a.mp4",
+        storage_ref="s3://bucket/a",
+        duration=3.2,
     )
     job1 = JobModel(
-        id=uid(), video_id=video.id, user_id="u1", status=JobStatus.QUEUED, fps=2, frame_count=10
+        id=uid(),
+        video_id=video.id,
+        user_id="u1",
+        status=JobStatus.QUEUED,
+        fps=2,
+        frame_count=10,
     )
     job2 = JobModel(
-        id=uid(), video_id=video.id, user_id="u1", status=JobStatus.RUNNING, fps=3, frame_count=20
+        id=uid(),
+        video_id=video.id,
+        user_id="u1",
+        status=JobStatus.RUNNING,
+        fps=3,
+        frame_count=20,
     )
 
     session.add_all([video, job1, job2])
@@ -111,15 +129,26 @@ def test_relationship_video_jobs_and_back_populates(session, uid):
 
 def test_cascade_delete_orphan_jobs(session, uid):
     video = VideoModel(
-        id=uid(), user_id="u1", filename="b.mp4", storage_ref="s3://bucket/b", duration=1.0
+        id=uid(),
+        user_id="u1",
+        filename="b.mp4",
+        storage_ref="s3://bucket/b",
+        duration=1.0,
     )
     job = JobModel(
-        id=uid(), video_id=video.id, user_id="u1", status=JobStatus.DONE, fps=1, frame_count=1
+        id=uid(),
+        video_id=video.id,
+        user_id="u1",
+        status=JobStatus.DONE,
+        fps=1,
+        frame_count=1,
     )
     session.add_all([video, job])
     session.commit()
 
-    assert session.scalar(select(VideoModel).where(VideoModel.id == video.id)) is not None
+    assert (
+        session.scalar(select(VideoModel).where(VideoModel.id == video.id)) is not None
+    )
     assert session.scalar(select(JobModel).where(JobModel.id == job.id)) is not None
 
     session.delete(video)
@@ -131,10 +160,19 @@ def test_cascade_delete_orphan_jobs(session, uid):
 
 def test_updated_at_changes_on_update(session, uid):
     video = VideoModel(
-        id=uid(), user_id="u1", filename="c.mp4", storage_ref="s3://bucket/c", duration=2.5
+        id=uid(),
+        user_id="u1",
+        filename="c.mp4",
+        storage_ref="s3://bucket/c",
+        duration=2.5,
     )
     job = JobModel(
-        id=uid(), video_id=video.id, user_id="u1", status=JobStatus.QUEUED, fps=1, frame_count=0
+        id=uid(),
+        video_id=video.id,
+        user_id="u1",
+        status=JobStatus.QUEUED,
+        fps=1,
+        frame_count=0,
     )
     session.add_all([video, job])
     session.commit()

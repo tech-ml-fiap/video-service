@@ -1,6 +1,6 @@
 import sys
 import types
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from fastapi.testclient import TestClient
 
 MODULE_PATH = "app.main"
@@ -8,7 +8,12 @@ FAKE_CONTROLLERS = "app.adapters.driver.api.controllers"
 
 
 def _install_fake_controllers_module():
-    for pkg in ["app", "app.adapters", "app.adapters.driver", "app.adapters.driver.api"]:
+    for pkg in [
+        "app",
+        "app.adapters",
+        "app.adapters.driver",
+        "app.adapters.driver.api",
+    ]:
         if pkg not in sys.modules:
             sys.modules[pkg] = types.ModuleType(pkg)
 

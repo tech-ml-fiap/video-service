@@ -31,7 +31,11 @@ class _Job:
 
 
 class _JobsRepo:
-    def __init__(self, by_id: dict[str, _Job] | None = None, by_user: dict[str, list[_Job]] | None = None):
+    def __init__(
+        self,
+        by_id: dict[str, _Job] | None = None,
+        by_user: dict[str, list[_Job]] | None = None,
+    ):
         self._by_id = by_id or {}
         self._by_user = by_user or {}
 
@@ -133,8 +137,20 @@ def test_list_jobs_by_user_returns_sanitized_list_only_for_that_user():
     out = svc(user_id="carol")
 
     assert out == [
-        {"job_id": "b", "status": "DONE", "fps": 2, "frames": 42, "artifact_ref": "/out.zip"},
-        {"job_id": "a", "status": "QUEUED", "fps": 1, "frames": 0, "artifact_ref": None},
+        {
+            "job_id": "b",
+            "status": "DONE",
+            "fps": 2,
+            "frames": 42,
+            "artifact_ref": "/out.zip",
+        },
+        {
+            "job_id": "a",
+            "status": "QUEUED",
+            "fps": 1,
+            "frames": 0,
+            "artifact_ref": None,
+        },
     ]
     assert uow.entered == 1 and uow.exited == 1
 

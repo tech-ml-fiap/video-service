@@ -16,7 +16,6 @@ celery_app.conf.update(
 
 
 # (opção A) importar o módulo de tasks explicitamente
-import app.adapters.driver.worker.tasks
 
 # (opção B alternativa) ao invés da linha acima:
 # celery_app.conf.imports = ("app.adapters.driver.worker.tasks",)

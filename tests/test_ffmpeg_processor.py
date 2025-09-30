@@ -13,10 +13,12 @@ class RunSpy:
         self.calls.append({"args": args, "kwargs": kwargs})
         if self.to_raise:
             raise self.to_raise
+
         class _R:
             stdout = ""
             stderr = ""
             returncode = 0
+
         return _R()
 
 
@@ -39,7 +41,7 @@ def test_extract_frames_success_counts_jpgs_and_builds_cmd(tmp_path, monkeypatch
     cmd = args[0]
     assert cmd[:6] == ["ffmpeg", "-y", "-hide_banner", "-v", "error", "-i"]
     assert "in.mp4" in cmd
-    assert "-vf" in cmd and f"fps=5" in cmd
+    assert "-vf" in cmd and "fps=5" in cmd
     assert "-q:v" in cmd and "2" in cmd
     assert str(out_dir / "%08d.jpg") in cmd
     assert kwargs["check"] is True
@@ -77,7 +79,9 @@ def test_extract_frames_creates_output_dir_if_missing(tmp_path, monkeypatch):
         ("", "", "ffmpeg failed"),
     ],
 )
-def test_extract_frames_raises_runtime_on_called_process_error(monkeypatch, tmp_path, stderr, stdout, expected):
+def test_extract_frames_raises_runtime_on_called_process_error(
+    monkeypatch, tmp_path, stderr, stdout, expected
+):
     out_dir = tmp_path / "f"
     out_dir.mkdir(parents=True, exist_ok=True)
 

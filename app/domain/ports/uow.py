@@ -1,9 +1,11 @@
 from typing import Protocol
 from app.domain.ports.repository import VideoRepositoryPort, JobRepositoryPort
 
+
 class UnitOfWorkPort(Protocol):
     videos: VideoRepositoryPort
     jobs: JobRepositoryPort
+
     def __enter__(self): ...
     def __exit__(self, exc_type, exc, tb): ...
     def commit(self): ...

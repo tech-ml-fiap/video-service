@@ -4,6 +4,7 @@ from app.domain.entities import Video
 from app.domain.ports.repository import VideoRepositoryPort
 from app.adapters.driven.db.models import VideoModel
 
+
 class SQLAlchemyVideoRepository(VideoRepositoryPort):
     def __init__(self, session: Session):
         self.session = session

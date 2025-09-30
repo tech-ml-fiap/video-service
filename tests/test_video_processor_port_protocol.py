@@ -48,4 +48,4 @@ def test_isinstance_and_issubclass_raise_typeerror_without_runtime_checkable():
     with pytest.raises(TypeError):
         isinstance(ImplOK(), VideoProcessorPort)  # noqa: B015
     with pytest.raises(TypeError):
-        issubclass(ImplOK, VideoProcessorPort)    # noqa: B015
+        issubclass(ImplOK, VideoProcessorPort)  # noqa: B015

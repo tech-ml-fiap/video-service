@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @celery_app.task(name="process_video_job", bind=True)
 def process_video_job(self, job_id: str):
     logger.info("process_video_job: START %s", job_id)

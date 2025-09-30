@@ -1,5 +1,6 @@
 from typing import Protocol, BinaryIO
 
+
 class StoragePort(Protocol):
     def save_upload(self, file_stream: BinaryIO, filename: str) -> str: ...
     def save_artifact(self, local_path: str) -> str: ...

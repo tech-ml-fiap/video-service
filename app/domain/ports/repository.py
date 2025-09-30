@@ -1,10 +1,12 @@
 from typing import Protocol, Iterable, Optional, runtime_checkable
 from app.domain.entities import Video, VideoJob
 
+
 @runtime_checkable
 class VideoRepositoryPort(Protocol):
     def add(self, v: Video) -> None: ...
     def get(self, video_id: str) -> Optional[Video]: ...
+
 
 @runtime_checkable
 class JobRepositoryPort(Protocol):

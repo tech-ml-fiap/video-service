@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 
-from app.adapters.driven.repositories.sqlalchemy_video_repo import SQLAlchemyVideoRepository
+from app.adapters.driven.repositories.sqlalchemy_video_repo import (
+    SQLAlchemyVideoRepository,
+)
 from app.domain.entities import Video
 from app.adapters.driven.db.models import VideoModel
 

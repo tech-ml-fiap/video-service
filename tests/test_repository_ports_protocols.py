@@ -39,13 +39,19 @@ class GoodJobRepo:
 
 
 class MissingUpdateJobRepo:
-    def add(self, j): pass
-    def get(self, job_id): return None
+    def add(self, j):
+        pass
+
+    def get(self, job_id):
+        return None
+
     # faltando update
-    def list_by_user(self, user_id): return []
+    def list_by_user(self, user_id):
+        return []
 
 
 # --- Tests para VideoRepositoryPort ---
+
 
 def test_video_repository_port_runtime_checks_and_duck_typing():
     good = GoodVideoRepo()
@@ -56,7 +62,9 @@ def test_video_repository_port_runtime_checks_and_duck_typing():
     assert not isinstance(MissingGetVideoRepo(), VideoRepositoryPort)
     assert not issubclass(MissingGetVideoRepo, VideoRepositoryPort)
 
-    class V: pass
+    class V:
+        pass
+
     v = V()
     v.id = "v1"
     good.add(v)
@@ -64,6 +72,7 @@ def test_video_repository_port_runtime_checks_and_duck_typing():
 
 
 # --- Tests para JobRepositoryPort ---
+
 
 def test_job_repository_port_runtime_checks_and_duck_typing():
     good = GoodJobRepo()
@@ -75,9 +84,15 @@ def test_job_repository_port_runtime_checks_and_duck_typing():
     assert not isinstance(bad, JobRepositoryPort)
     assert not issubclass(MissingUpdateJobRepo, JobRepositoryPort)
 
-    class J: pass
-    j1 = J(); j1.id = "j1"; j1.user_id = "u1"
-    j2 = J(); j2.id = "j2"; j2.user_id = "u1"
+    class J:
+        pass
+
+    j1 = J()
+    j1.id = "j1"
+    j1.user_id = "u1"
+    j2 = J()
+    j2.id = "j2"
+    j2.user_id = "u1"
 
     good.add(j1)
     good.add(j2)
@@ -85,7 +100,10 @@ def test_job_repository_port_runtime_checks_and_duck_typing():
     assert good.get("j1") is j1
     assert good.get("j2") is j2
 
-    j1b = J(); j1b.id = "j1"; j1b.user_id = "u1"; j1b.changed = True
+    j1b = J()
+    j1b.id = "j1"
+    j1b.user_id = "u1"
+    j1b.changed = True
     good.update(j1b)
     assert good.get("j1") is j1b
     assert getattr(good.get("j1"), "changed", False) is True

@@ -30,16 +30,26 @@ class _Job:
 class _VideoRepo:
     def __init__(self):
         self._by_id = {}
-    def add(self, v): self._by_id[v.id] = v
-    def get(self, video_id): return self._by_id.get(video_id)
+
+    def add(self, v):
+        self._by_id[v.id] = v
+
+    def get(self, video_id):
+        return self._by_id.get(video_id)
 
 
 class _JobRepo:
     def __init__(self):
         self._by_id = {}
-    def add(self, j): self._by_id[j.id] = j
-    def get(self, job_id): return self._by_id.get(job_id)
-    def update(self, j): self._by_id[j.id] = j
+
+    def add(self, j):
+        self._by_id[j.id] = j
+
+    def get(self, job_id):
+        return self._by_id.get(job_id)
+
+    def update(self, j):
+        self._by_id[j.id] = j
 
 
 class _UoW:
@@ -49,14 +59,20 @@ class _UoW:
         self.commits = 0
         self.enters = 0
         self.exits = 0
+
     def __enter__(self):
         self.enters += 1
         return self
+
     def __exit__(self, exc_type, exc, tb):
         self.exits += 1
         return False
-    def commit(self): self.commits += 1
-    def rollback(self): pass
+
+    def commit(self):
+        self.commits += 1
+
+    def rollback(self):
+        pass
 
 
 class _Storage:
@@ -65,8 +81,10 @@ class _Storage:
         self.saved_zip_path = None
         self.saved_zip_entries = None
         self._seed_files = []
+
     def resolve_path(self, ref: str) -> str:
         return ref
+
     def make_temp_dir(self, prefix: str) -> str:
         d = self.tmp_path / f"{prefix}_tmp"
         d.mkdir(parents=True, exist_ok=True)
@@ -75,6 +93,7 @@ class _Storage:
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_bytes(b"x")
         return str(d)
+
     def save_artifact(self, local_path: str) -> str:
         self.saved_zip_path = local_path
         with zipfile.ZipFile(local_path, "r") as zf:
@@ -86,6 +105,7 @@ class _ProcessorOK:
     def __init__(self, frame_count: int):
         self.frame_count = frame_count
         self.calls = []
+
     def extract_frames(self, input_path, out_dir, fps=1) -> int:
         self.calls.append((input_path, out_dir, fps))
         return self.frame_count
@@ -95,9 +115,22 @@ class _ProcessorBoom:
     def __init__(self, exc: Exception):
         self.exc = exc
         self.calls = []
+
     def extract_frames(self, input_path, out_dir, fps=1) -> int:
         self.calls.append((input_path, out_dir, fps))
         raise self.exc
+
+
+class _Notifier:
+    """Dublê simples para NotificationPort."""
+    def __init__(self, should_raise=False):
+        self.should_raise = should_raise
+        self.calls = []
+
+    def notify(self, **kwargs):
+        self.calls.append(kwargs)
+        if self.should_raise:
+            raise RuntimeError("notify failed")
 
 
 def test_returns_early_when_job_missing(tmp_path):
@@ -106,19 +139,24 @@ def test_returns_early_when_job_missing(tmp_path):
     uow = _UoW(videos, jobs)
     storage = _Storage(tmp_path)
     processor = _ProcessorOK(frame_count=2)
+    notifier = _Notifier()
 
-    svc = ProcessVideoService(uow=uow, storage=storage, processor=processor)
+    svc = ProcessVideoService(uow=uow, storage=storage, processor=processor, notifier=notifier)
     svc(job_id="nope")
 
     assert uow.commits == 0
     assert processor.calls == []
+    # nenhuma notificação pois não há job
+    assert notifier.calls == []
 
 
 def test_sets_running_then_completes_successfully_creates_zip_only_images(tmp_path):
     videos = _VideoRepo()
     jobs = _JobRepo()
     job = _Job(id="job1", video_id="vid1", user_id="u1", status=JobStatus.QUEUED, fps=3)
-    video = _Video(id="vid1", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v.mp4"))
+    video = _Video(
+        id="vid1", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v.mp4")
+    )
     (tmp_path / "v.mp4").write_bytes(b"video")  # input local
 
     jobs.add(job)
@@ -133,8 +171,9 @@ def test_sets_running_then_completes_successfully_creates_zip_only_images(tmp_pa
         "also/ignore.jpegx",
     ]
     processor = _ProcessorOK(frame_count=2)
+    notifier = _Notifier()
 
-    svc = ProcessVideoService(uow=uow, storage=storage, processor=processor)
+    svc = ProcessVideoService(uow=uow, storage=storage, processor=processor, notifier=notifier)
     before = datetime.utcnow() - timedelta(seconds=1)
     svc(job_id="job1")
     after = datetime.utcnow() + timedelta(seconds=1)
@@ -143,7 +182,7 @@ def test_sets_running_then_completes_successfully_creates_zip_only_images(tmp_pa
     j = jobs.get("job1")
     assert j.status == JobStatus.DONE
     assert j.frame_count == 2
-    assert j.artifact_ref == os.path.join("/outputs", f"frames_job1.zip")
+    assert j.artifact_ref == os.path.join("/outputs", "frames_job1.zip")
     assert j.updated_at is not None and before <= j.updated_at <= after
 
     assert storage.saved_zip_entries == ["00000001.jpg", "nested/00000002.PNG"]
@@ -154,18 +193,28 @@ def test_sets_running_then_completes_successfully_creates_zip_only_images(tmp_pa
     assert out_dir.endswith("job1_tmp")
     assert fps == 3
 
+    # notificação de sucesso enviada
+    assert len(notifier.calls) == 1
+    assert notifier.calls[0]["status"] == "success"
+    assert notifier.calls[0]["job_id"] == "job1"
+    assert notifier.calls[0]["user_id"] == "u1"
+    assert notifier.calls[0]["video_url"] == j.artifact_ref
+
 
 def test_video_not_found_sets_error_and_does_not_call_processor(tmp_path):
     videos = _VideoRepo()
     jobs = _JobRepo()
-    job = _Job(id="job2", video_id="vid_missing", user_id="u1", status=JobStatus.QUEUED, fps=1)
+    job = _Job(
+        id="job2", video_id="vid_missing", user_id="u1", status=JobStatus.QUEUED, fps=1
+    )
     jobs.add(job)
 
     uow = _UoW(videos, jobs)
     storage = _Storage(tmp_path)
     processor = _ProcessorOK(frame_count=5)
+    notifier = _Notifier()
 
-    svc = ProcessVideoService(uow=uow, storage=storage, processor=processor)
+    svc = ProcessVideoService(uow=uow, storage=storage, processor=processor, notifier=notifier)
     svc(job_id="job2")
 
     j = jobs.get("job2")
@@ -174,12 +223,21 @@ def test_video_not_found_sets_error_and_does_not_call_processor(tmp_path):
     assert uow.commits == 2
     assert processor.calls == []
 
+    # notificação de erro enviada
+    assert len(notifier.calls) == 1
+    assert notifier.calls[0]["status"] == "error"
+    assert notifier.calls[0]["error_message"] == "Video not found"
+    assert notifier.calls[0]["job_id"] == "job2"
+    assert notifier.calls[0]["user_id"] == "u1"
+
 
 def test_no_frames_extracted_sets_error(tmp_path):
     videos = _VideoRepo()
     jobs = _JobRepo()
     job = _Job(id="job3", video_id="vid3", user_id="u1", status=JobStatus.QUEUED, fps=1)
-    video = _Video(id="vid3", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v3.mp4"))
+    video = _Video(
+        id="vid3", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v3.mp4")
+    )
     (tmp_path / "v3.mp4").write_bytes(b"v")
 
     jobs.add(job)
@@ -189,8 +247,9 @@ def test_no_frames_extracted_sets_error(tmp_path):
     storage = _Storage(tmp_path)
     storage._seed_files = []
     processor = _ProcessorOK(frame_count=0)
+    notifier = _Notifier()
 
-    svc = ProcessVideoService(uow=uow, storage=storage, processor=processor)
+    svc = ProcessVideoService(uow=uow, storage=storage, processor=processor, notifier=notifier)
     svc(job_id="job3")
 
     j = jobs.get("job3")
@@ -199,12 +258,21 @@ def test_no_frames_extracted_sets_error(tmp_path):
     assert j.updated_at is not None
     assert uow.commits == 2
 
+    # notificação de erro enviada
+    assert len(notifier.calls) == 1
+    assert notifier.calls[0]["status"] == "error"
+    assert notifier.calls[0]["error_message"] == "No frames extracted"
+    assert notifier.calls[0]["job_id"] == "job3"
+    assert notifier.calls[0]["user_id"] == "u1"
+
 
 def test_processor_raises_exception_sets_error_with_message(tmp_path):
     videos = _VideoRepo()
     jobs = _JobRepo()
     job = _Job(id="job4", video_id="vid4", user_id="u1", status=JobStatus.QUEUED, fps=2)
-    video = _Video(id="vid4", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v4.mp4"))
+    video = _Video(
+        id="vid4", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v4.mp4")
+    )
     (tmp_path / "v4.mp4").write_bytes(b"v")
 
     jobs.add(job)
@@ -214,8 +282,9 @@ def test_processor_raises_exception_sets_error_with_message(tmp_path):
     storage = _Storage(tmp_path)
     storage._seed_files = ["a.jpg"]
     processor = _ProcessorBoom(RuntimeError("boom"))
+    notifier = _Notifier()
 
-    svc = ProcessVideoService(uow=uow, storage=storage, processor=processor)
+    svc = ProcessVideoService(uow=uow, storage=storage, processor=processor, notifier=notifier)
     svc(job_id="job4")
 
     j = jobs.get("job4")
@@ -223,3 +292,10 @@ def test_processor_raises_exception_sets_error_with_message(tmp_path):
     assert j.error == "boom"
     assert j.updated_at is not None
     assert uow.commits == 2
+
+    # notificação de erro enviada
+    assert len(notifier.calls) == 1
+    assert notifier.calls[0]["status"] == "error"
+    assert notifier.calls[0]["error_message"] == "boom"
+    assert notifier.calls[0]["job_id"] == "job4"
+    assert notifier.calls[0]["user_id"] == "u1"

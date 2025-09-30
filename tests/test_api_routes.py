@@ -31,6 +31,7 @@ def test_enqueue_video_202(monkeypatch):
                 "peek_bytes": file_stream.read(4),
             }
             return "job-123"
+
         return _svc
 
     monkeypatch.setattr(routes_module, "get_enqueue_service", fake_enqueue_service)
@@ -56,6 +57,7 @@ def test_get_status_ok(monkeypatch):
             assert job_id == "job-1"
             assert user_id == "u-1"
             return {"job_id": job_id, "status": "processing"}
+
         return _svc
 
     monkeypatch.setattr(routes_module, "get_status_service", fake_status_service)
@@ -72,6 +74,7 @@ def test_get_status_not_found_404(monkeypatch):
     def fake_status_service():
         def _svc(job_id, user_id):
             raise KeyError("not found")
+
         return _svc
 
     monkeypatch.setattr(routes_module, "get_status_service", fake_status_service)
@@ -89,6 +92,7 @@ def test_list_jobs_ok(monkeypatch):
         def _svc(user_id):
             assert user_id == "u-1"
             return [{"job_id": "a"}, {"job_id": "b"}]
+
         return _svc
 
     monkeypatch.setattr(routes_module, "get_list_jobs_service", fake_list_jobs_service)
@@ -105,6 +109,7 @@ def test_download_404_when_process_missing(monkeypatch):
     def fake_status_service():
         def _svc(job_id, user_id):
             raise KeyError("nope")
+
         return _svc
 
     monkeypatch.setattr(routes_module, "get_status_service", fake_status_service)
@@ -121,6 +126,7 @@ def test_download_400_when_zip_not_ready(monkeypatch):
     def fake_status_service():
         def _svc(job_id, user_id):
             return {"artifact_ref": None}
+
         return _svc
 
     monkeypatch.setattr(routes_module, "get_status_service", fake_status_service)
@@ -137,6 +143,7 @@ def test_download_404_when_artifact_missing(tmp_path, monkeypatch):
     def fake_status_service():
         def _svc(job_id, user_id):
             return {"artifact_ref": "/path/missing/file.zip"}
+
         return _svc
 
     class FakeStorage:
@@ -162,6 +169,7 @@ def test_download_success(tmp_path, monkeypatch):
     def fake_status_service():
         def _svc(job_id, user_id):
             return {"artifact_ref": str(zip_path)}
+
         return _svc
 
     class FakeStorage:

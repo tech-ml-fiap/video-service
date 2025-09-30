@@ -7,15 +7,19 @@ from app.config.container import get_auth_gateway
 
 security = HTTPBearer(auto_error=False)
 
+
 class CurrentUser(BaseModel):
     user_id: str
+
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Security(security),
     auth: CustomerAuthPort = Depends(get_auth_gateway),
 ) -> CurrentUser:
     if not credentials or credentials.scheme.lower() != "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciais ausentes")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciais ausentes"
+        )
 
     try:
         uid = auth.verify_token(credentials.credentials)

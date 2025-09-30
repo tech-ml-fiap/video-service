@@ -1,4 +1,3 @@
-import time
 from datetime import datetime, timezone, timedelta
 
 from sqlalchemy import select, func
@@ -20,9 +19,17 @@ def _make_parent_video(session, video_id: str, user_id="u1"):
     session.commit()
     return v
 
-def _make_job_entity(job_id, video_id, user_id="u1",
-                     status=JobStatus.QUEUED, fps=1, frame_count=0,
-                     artifact_ref=None, error=None):
+
+def _make_job_entity(
+    job_id,
+    video_id,
+    user_id="u1",
+    status=JobStatus.QUEUED,
+    fps=1,
+    frame_count=0,
+    artifact_ref=None,
+    error=None,
+):
     now = datetime.now(timezone.utc)
     return VideoJob(
         id=job_id,
@@ -73,16 +80,21 @@ def test_update_existing_and_noop_when_missing(session, uid):
     _make_parent_video(session, video_id)
 
     job_id = uid()
-    ent = _make_job_entity(job_id, video_id, user_id="bob",
-                           status=JobStatus.QUEUED, fps=1, frame_count=0)
+    ent = _make_job_entity(
+        job_id, video_id, user_id="bob", status=JobStatus.QUEUED, fps=1, frame_count=0
+    )
     repo.add(ent)
     session.commit()
 
     ent_updated = _make_job_entity(
-        job_id, video_id, user_id="bob",
+        job_id,
+        video_id,
+        user_id="bob",
         status=JobStatus.RUNNING,
-        fps=4, frame_count=42,
-        artifact_ref="s3://out/artifact.json", error="partial warning"
+        fps=4,
+        frame_count=42,
+        artifact_ref="s3://out/artifact.json",
+        error="partial warning",
     )
     repo.update(ent_updated)
     session.commit()
@@ -116,7 +128,7 @@ def test_list_by_user_returns_in_desc_created_at(session, uid):
     session.commit()
 
     t_early = datetime.now(timezone.utc) - timedelta(seconds=10)
-    t_late  = datetime.now(timezone.utc) + timedelta(seconds=10)
+    t_late = datetime.now(timezone.utc) + timedelta(seconds=10)
     db_j1 = session.get(JobModel, j1.id)
     db_j2 = session.get(JobModel, j2.id)
     db_j1.created_at = t_early

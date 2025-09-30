@@ -2,6 +2,7 @@ from pathlib import Path
 import subprocess
 from app.domain.ports.video_processor import VideoProcessorPort
 
+
 class FFmpegVideoProcessor(VideoProcessorPort):
     def __init__(self, ffmpeg_bin: str = "ffmpeg", timeout_sec: int = 600):
         self.ffmpeg_bin = ffmpeg_bin
@@ -12,10 +13,17 @@ class FFmpegVideoProcessor(VideoProcessorPort):
         out_dir_p.mkdir(parents=True, exist_ok=True)
 
         cmd = [
-            self.ffmpeg_bin, "-y", "-hide_banner", "-v", "error",
-            "-i", input_path,
-            "-vf", f"fps={fps}",
-            "-q:v", "2",
+            self.ffmpeg_bin,
+            "-y",
+            "-hide_banner",
+            "-v",
+            "error",
+            "-i",
+            input_path,
+            "-vf",
+            f"fps={fps}",
+            "-q:v",
+            "2",
             str(out_dir_p / "%08d.jpg"),
         ]
 

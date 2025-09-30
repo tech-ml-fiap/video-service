@@ -5,9 +5,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import (
-    String, Integer, Enum, DateTime, Text, Float, ForeignKey, func
-)
+from sqlalchemy import String, Integer, Enum, DateTime, Text, Float, ForeignKey, func
 from app.domain.entities import JobStatus
 
 
@@ -33,6 +31,7 @@ class VideoModel(Base):
 
     def to_entity(self):
         from app.domain.entities import Video
+
         return Video(
             id=self.id,
             user_id=self.user_id,
@@ -78,13 +77,17 @@ class JobModel(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     video: Mapped["VideoModel"] = relationship(back_populates="jobs")
 
     def to_entity(self):
         from app.domain.entities import VideoJob
+
         return VideoJob(
             id=self.id,
             video_id=self.video_id,

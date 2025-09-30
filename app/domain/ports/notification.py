@@ -3,6 +3,7 @@ from typing import Optional, Literal
 
 Status = Literal["success", "error"]
 
+
 class NotificationPort(ABC):
     @abstractmethod
     def notify(

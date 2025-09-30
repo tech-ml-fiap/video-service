@@ -11,6 +11,7 @@ class NoopCelery:
     def task(self, *_, **__):
         def deco(fn):
             return fn
+
         return deco
 
 

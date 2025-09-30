@@ -50,7 +50,7 @@ class FakeStorage:
         return f"/uploads/{filename}"
 
     def save_artifact(self, local_path: str) -> str:
-        return f"/outputs/{local_path.rsplit('/',1)[-1]}"
+        return f"/outputs/{local_path.rsplit('/', 1)[-1]}"
 
     def make_temp_dir(self, prefix: str) -> str:
         return f"/tmp/{prefix}_x"
@@ -70,16 +70,20 @@ class FakeBus:
 
 
 class _UUIDStub:
-    def __init__(self, value): self._v = value
-    def __str__(self): return self._v
+    def __init__(self, value):
+        self._v = value
+
+    def __str__(self):
+        return self._v
 
 
 def _patch_uuid4(monkeypatch, values):
     it = iter(values)
+
     def fake_uuid4():
         return _UUIDStub(next(it))
-    monkeypatch.setattr("app.domain.services.enqueue_video.uuid4", lambda: fake_uuid4())
 
+    monkeypatch.setattr("app.domain.services.enqueue_video.uuid4", lambda: fake_uuid4())
 
 
 def test_enqueue_happy_path_with_custom_fps(monkeypatch):
@@ -92,7 +96,9 @@ def test_enqueue_happy_path_with_custom_fps(monkeypatch):
 
     svc = EnqueueVideoService(uow=uow, storage=storage, bus=bus)
 
-    job_id = svc(user_id="user-1", file_stream=io.BytesIO(b"data"), filename="video.mp4", fps=5)
+    job_id = svc(
+        user_id="user-1", file_stream=io.BytesIO(b"data"), filename="video.mp4", fps=5
+    )
 
     assert job_id == "job-uuid"
 

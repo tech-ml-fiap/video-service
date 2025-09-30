@@ -6,7 +6,14 @@ from pathlib import Path
 
 MODULE_NAME = "app.adapters.driver.worker.celery_app"
 
-FILE_PATH = (Path(__file__).resolve().parents[1] / "app" / "adapters" / "driver" / "worker" / "celery_app.py")
+FILE_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "app"
+    / "adapters"
+    / "driver"
+    / "worker"
+    / "celery_app.py"
+)
 
 
 def _ensure_pkg(name: str):

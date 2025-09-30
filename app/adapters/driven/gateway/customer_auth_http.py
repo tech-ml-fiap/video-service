@@ -1,7 +1,9 @@
-import os, httpx
+import os
+import httpx
 from fastapi import status
 from app.domain.ports.customer_auth_port import CustomerAuthPort
 from app.domain.errors import AuthError
+
 
 class CustomerAuthHttp(CustomerAuthPort):
     def __init__(self, base_url: str | None = None, client: httpx.Client | None = None):

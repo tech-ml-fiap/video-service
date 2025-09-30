@@ -30,16 +30,26 @@ class _Job:
 class _VideoRepo:
     def __init__(self):
         self._by_id = {}
-    def add(self, v): self._by_id[v.id] = v
-    def get(self, video_id): return self._by_id.get(video_id)
+
+    def add(self, v):
+        self._by_id[v.id] = v
+
+    def get(self, video_id):
+        return self._by_id.get(video_id)
 
 
 class _JobRepo:
     def __init__(self):
         self._by_id = {}
-    def add(self, j): self._by_id[j.id] = j
-    def get(self, job_id): return self._by_id.get(job_id)
-    def update(self, j): self._by_id[j.id] = j
+
+    def add(self, j):
+        self._by_id[j.id] = j
+
+    def get(self, job_id):
+        return self._by_id.get(job_id)
+
+    def update(self, j):
+        self._by_id[j.id] = j
 
 
 class _UoW:
@@ -49,14 +59,20 @@ class _UoW:
         self.commits = 0
         self.enters = 0
         self.exits = 0
+
     def __enter__(self):
         self.enters += 1
         return self
+
     def __exit__(self, exc_type, exc, tb):
         self.exits += 1
         return False
-    def commit(self): self.commits += 1
-    def rollback(self): pass
+
+    def commit(self):
+        self.commits += 1
+
+    def rollback(self):
+        pass
 
 
 class _Storage:
@@ -65,8 +81,10 @@ class _Storage:
         self.saved_zip_path = None
         self.saved_zip_entries = None
         self._seed_files = []
+
     def resolve_path(self, ref: str) -> str:
         return ref
+
     def make_temp_dir(self, prefix: str) -> str:
         d = self.tmp_path / f"{prefix}_tmp"
         d.mkdir(parents=True, exist_ok=True)
@@ -75,6 +93,7 @@ class _Storage:
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_bytes(b"x")
         return str(d)
+
     def save_artifact(self, local_path: str) -> str:
         self.saved_zip_path = local_path
         with zipfile.ZipFile(local_path, "r") as zf:
@@ -86,6 +105,7 @@ class _ProcessorOK:
     def __init__(self, frame_count: int):
         self.frame_count = frame_count
         self.calls = []
+
     def extract_frames(self, input_path, out_dir, fps=1) -> int:
         self.calls.append((input_path, out_dir, fps))
         return self.frame_count
@@ -95,6 +115,7 @@ class _ProcessorBoom:
     def __init__(self, exc: Exception):
         self.exc = exc
         self.calls = []
+
     def extract_frames(self, input_path, out_dir, fps=1) -> int:
         self.calls.append((input_path, out_dir, fps))
         raise self.exc
@@ -118,7 +139,9 @@ def test_sets_running_then_completes_successfully_creates_zip_only_images(tmp_pa
     videos = _VideoRepo()
     jobs = _JobRepo()
     job = _Job(id="job1", video_id="vid1", user_id="u1", status=JobStatus.QUEUED, fps=3)
-    video = _Video(id="vid1", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v.mp4"))
+    video = _Video(
+        id="vid1", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v.mp4")
+    )
     (tmp_path / "v.mp4").write_bytes(b"video")  # input local
 
     jobs.add(job)
@@ -143,7 +166,7 @@ def test_sets_running_then_completes_successfully_creates_zip_only_images(tmp_pa
     j = jobs.get("job1")
     assert j.status == JobStatus.DONE
     assert j.frame_count == 2
-    assert j.artifact_ref == os.path.join("/outputs", f"frames_job1.zip")
+    assert j.artifact_ref == os.path.join("/outputs", "frames_job1.zip")
     assert j.updated_at is not None and before <= j.updated_at <= after
 
     assert storage.saved_zip_entries == ["00000001.jpg", "nested/00000002.PNG"]
@@ -158,7 +181,9 @@ def test_sets_running_then_completes_successfully_creates_zip_only_images(tmp_pa
 def test_video_not_found_sets_error_and_does_not_call_processor(tmp_path):
     videos = _VideoRepo()
     jobs = _JobRepo()
-    job = _Job(id="job2", video_id="vid_missing", user_id="u1", status=JobStatus.QUEUED, fps=1)
+    job = _Job(
+        id="job2", video_id="vid_missing", user_id="u1", status=JobStatus.QUEUED, fps=1
+    )
     jobs.add(job)
 
     uow = _UoW(videos, jobs)
@@ -179,7 +204,9 @@ def test_no_frames_extracted_sets_error(tmp_path):
     videos = _VideoRepo()
     jobs = _JobRepo()
     job = _Job(id="job3", video_id="vid3", user_id="u1", status=JobStatus.QUEUED, fps=1)
-    video = _Video(id="vid3", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v3.mp4"))
+    video = _Video(
+        id="vid3", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v3.mp4")
+    )
     (tmp_path / "v3.mp4").write_bytes(b"v")
 
     jobs.add(job)
@@ -204,7 +231,9 @@ def test_processor_raises_exception_sets_error_with_message(tmp_path):
     videos = _VideoRepo()
     jobs = _JobRepo()
     job = _Job(id="job4", video_id="vid4", user_id="u1", status=JobStatus.QUEUED, fps=2)
-    video = _Video(id="vid4", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v4.mp4"))
+    video = _Video(
+        id="vid4", user_id="u1", filename="v.mp4", storage_ref=str(tmp_path / "v4.mp4")
+    )
     (tmp_path / "v4.mp4").write_bytes(b"v")
 
     jobs.add(job)

@@ -1,4 +1,5 @@
-import os, shutil
+import os
+import shutil
 import zipfile
 from datetime import datetime
 from typing import Optional
@@ -10,7 +11,13 @@ from app.domain.ports.notification import NotificationPort
 
 
 class ProcessVideoService:
-    def __init__(self, uow: UnitOfWorkPort, storage: StoragePort, processor: VideoProcessorPort, notifier: NotificationPort):
+    def __init__(
+        self,
+        uow: UnitOfWorkPort,
+        storage: StoragePort,
+        processor: VideoProcessorPort,
+        notifier: NotificationPort,
+    ):
         self.uow = uow
         self.storage = storage
         self.processor = processor
@@ -39,7 +46,12 @@ class ProcessVideoService:
                 self.uow.jobs.update(job)
                 self.uow.commit()
                 try:
-                    self.notifier.notify(user_id=job.user_id, job_id=job.id, status="error", error_message="Video not found")
+                    self.notifier.notify(
+                        user_id=job.user_id,
+                        job_id=job.id,
+                        status="error",
+                        error_message="Video not found",
+                    )
                 except Exception:
                     pass
                 return
@@ -48,16 +60,18 @@ class ProcessVideoService:
             temp_dir = self.storage.make_temp_dir(prefix=job.id)
 
             try:
-                frame_count = self.processor.extract_frames(input_path, temp_dir, fps=job.fps)
+                frame_count = self.processor.extract_frames(
+                    input_path, temp_dir, fps=job.fps
+                )
                 if frame_count <= 0:
                     raise RuntimeError("No frames extracted")
 
                 zip_path = os.path.join(temp_dir, f"frames_{job.id}.zip")
                 with zipfile.ZipFile(
-                        zip_path,
-                        mode="w",
-                        compression=zipfile.ZIP_DEFLATED,
-                        allowZip64=True,
+                    zip_path,
+                    mode="w",
+                    compression=zipfile.ZIP_DEFLATED,
+                    allowZip64=True,
                 ) as zf:
                     for root, _, files in os.walk(temp_dir):
                         for f in sorted(files):
@@ -95,9 +109,19 @@ class ProcessVideoService:
             print("OpA")
             print(final_status)
             if final_status == JobStatus.DONE:
-                self.notifier.notify(user_id=job.user_id, job_id=job_id, status="success", video_url=artifact_ref)
+                self.notifier.notify(
+                    user_id=job.user_id,
+                    job_id=job_id,
+                    status="success",
+                    video_url=artifact_ref,
+                )
             else:
-                self.notifier.notify(user_id=job.user_id, job_id=job_id, status="error", error_message=error_message)
+                self.notifier.notify(
+                    user_id=job.user_id,
+                    job_id=job_id,
+                    status="error",
+                    error_message=error_message,
+                )
         except Exception:
             # logar um warning
             pass

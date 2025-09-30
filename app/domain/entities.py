@@ -3,11 +3,13 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
+
 class JobStatus(str, Enum):
     QUEUED = "queued"
     RUNNING = "running"
     DONE = "done"
     ERROR = "error"
+
 
 @dataclass
 class Video:
@@ -17,6 +19,7 @@ class Video:
     storage_ref: str
     duration: Optional[float] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
+
 
 @dataclass
 class VideoJob:

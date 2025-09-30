@@ -1,5 +1,6 @@
 from typing import Protocol, runtime_checkable
 
+
 @runtime_checkable
 class CustomerAuthPort(Protocol):
     def verify_token(self, token: str) -> str | int:

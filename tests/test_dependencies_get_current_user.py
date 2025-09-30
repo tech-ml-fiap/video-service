@@ -9,6 +9,7 @@ from app.domain.errors import AuthError
 class FakeAuthOK:
     def __init__(self, uid="u-123"):
         self.uid = uid
+
     def verify_token(self, token: str) -> str:
         assert token == "good-token"
         return self.uid
@@ -18,6 +19,7 @@ class FakeAuthError:
     def __init__(self, message: str, status_code: int):
         self.message = message
         self.status_code = status_code
+
     def verify_token(self, token: str) -> str:
         raise AuthError(self.message, self.status_code)
 
@@ -26,7 +28,7 @@ def make_app():
     app = FastAPI()
 
     @app.get("/me")
-    def me(user = Depends(get_current_user)):
+    def me(user=Depends(get_current_user)):
         return {"user_id": user.user_id}
 
     return app
@@ -52,7 +54,9 @@ def test_wrong_scheme_returns_401():
 
 def test_valid_bearer_token_returns_current_user():
     app = make_app()
-    app.dependency_overrides[deps_mod.get_auth_gateway] = lambda: FakeAuthOK(uid="user-42")
+    app.dependency_overrides[deps_mod.get_auth_gateway] = lambda: FakeAuthOK(
+        uid="user-42"
+    )
 
     client = TestClient(app)
     resp = client.get("/me", headers={"Authorization": "Bearer good-token"})
@@ -62,7 +66,9 @@ def test_valid_bearer_token_returns_current_user():
 
 def test_invalid_token_maps_to_401():
     app = make_app()
-    app.dependency_overrides[deps_mod.get_auth_gateway] = lambda: FakeAuthError("Token inválido", 401)
+    app.dependency_overrides[deps_mod.get_auth_gateway] = lambda: FakeAuthError(
+        "Token inválido", 401
+    )
 
     client = TestClient(app)
     resp = client.get("/me", headers={"Authorization": "Bearer any"})
@@ -72,7 +78,9 @@ def test_invalid_token_maps_to_401():
 
 def test_inactive_user_maps_to_403():
     app = make_app()
-    app.dependency_overrides[deps_mod.get_auth_gateway] = lambda: FakeAuthError("Cliente inativo", 403)
+    app.dependency_overrides[deps_mod.get_auth_gateway] = lambda: FakeAuthError(
+        "Cliente inativo", 403
+    )
 
     client = TestClient(app)
     resp = client.get("/me", headers={"Authorization": "Bearer any"})

@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 import os
 
-class Settings(BaseModel):
+class Settings(BaseSettings):
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./local.db")
     broker_url: str = os.getenv("BROKER_URL", "amqp://guest:guest@localhost:5672//")
     result_backend: str = os.getenv("RESULT_BACKEND", "rpc://")

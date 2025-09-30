@@ -9,6 +9,12 @@ services:
     ports: ["5432:5432"]
     volumes: [ "pgdata:/var/lib/postgresql/data" ]
     networks: [video]
+    healthcheck:
+      test: [ "CMD-SHELL","pg_isready -U soat -d videos" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   rabbitmq:
     image: rabbitmq:3-management
     ports: ["5672:5672", "15672:15672"]
@@ -25,9 +31,13 @@ services:
       STORAGE_DIR: /data
       JWT_PUBLIC_KEY: ""
     volumes: [ "files:/data" ]
-    depends_on: [ "db", "rabbitmq" ]
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
     ports: ["8000:8000"]
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     networks: [video]
 
   worker:
